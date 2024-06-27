@@ -4,12 +4,11 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
+from datetime import datetime, timedelta
 from fyers_api import fyersModel
 
 # Replace with your actual client ID and access token
 client_id = "2A6LCH4LF8-100"
-access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJhcGkuZnllcnMuaW4iLCJpYXQiOjE3MTkzODEwNDMsImV4cCI6MTcxOTQ0ODI0MywibmJmIjoxNzE5MzgxMDQzLCJhdWQiOlsieDowIiwieDoxIiwieDoyIiwiZDoxIiwiZDoyIiwieDoxIiwieDowIl0sInN1YiI6ImFjY2Vzc190b2tlbiIsImF0X2hhc2giOiJnQUFBQUFCbWU2d3pYTWdfalBvSXUtOVFhR0RndC04WlBIZ2tfYnpCRi1EcTB3WUFvUFFrU1JmWkJYd3dPbHloekJsdU9YR09qX2lKWTVOaWtESGpnQUd3c2taSjQ0WlVqY2NkaXBMRFJZc08yZFJvc3dYdHNEcz0iLCJkaXNwbGF5X25hbWUiOiJQUklZQU5LQSBHVVBUQSIsIm9tcyI6IksxIiwiaHNtX2tleSI6IjdhYjY3OTI0NzQ5MDY0Y2E0MmEzOWExNmU0MmIxOTJmY2Q0NTlkZDhlNWU5MDZhMmQ5NzVkNTk4IiwiZnlfaWQiOiJZUDExMjYzIiwiYXBwVHlwZSI6MTAwLCJwb2FfZmxhZyI6Ik4ifQ.NImvNXjlj9YZPZfUS3PYzP0N9Q0KLlR_9QduqGt0Zoc"
-
 log_path = os.path.join(os.getcwd(), "fyers_logs")
 
 # Create the directory if it doesn't exist
@@ -18,57 +17,64 @@ os.makedirs(log_path, exist_ok=True)
 # Initialize the FyersModel instance with your client_id, access_token, and enable async mode
 fyers = fyersModel.FyersModel(client_id=client_id, is_async=False, token=access_token, log_path=log_path)
 
+# Define the date range for the last one year
+end_date = datetime.now()
+start_date = end_date - timedelta(days=365)
+
+# Convert the date range to Unix timestamps
+range_from = int(start_date.timestamp())
+range_to = int(end_date.timestamp())
+
 # Define the data for the API request
 data = {
-    "symbol": "NSE:SBIN-EQ",
+    "symbol": "NSE:GTLINFRA-EQ",
     "resolution": "D",
     "date_format": "0",
-    "range_from": "1690895316",
-    "range_to": "1691068173",
+    "range_from": str(range_from),
+    "range_to": str(range_to),
     "cont_flag": "1"
 }
 
 # Fetch the historical data
 response = fyers.history(data=data)
-print(response)
+# print(response)
 
 # Check if the response is successful
 if response['s'] == 'ok':
     # Extract the candle data
     candles = response['candles']
-    
+
     # Convert the response data to a DataFrame
     columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
     df = pd.DataFrame(candles, columns=columns)
-    
+
     # Convert timestamp to datetime
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
-    
-    # Convert range_from and range_to to numeric before converting to datetime
-    range_from = pd.to_numeric(data["range_from"])
-    range_to = pd.to_numeric(data["range_to"])
-    
+
     # Plotting the candlestick chart with volume
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True, gridspec_kw={'height_ratios': [3, 1]})
-    
+
     # Plotting the candlestick chart
     for index, row in df.iterrows():
         color = 'green' if row['close'] >= row['open'] else 'red'
         ax1.plot([row['timestamp'], row['timestamp']], [row['low'], row['high']], color='black')
         ax1.plot([row['timestamp'], row['timestamp']], [row['open'], row['close']], color=color, linewidth=5)
-    
+
     # Plotting the volume chart
     ax2.bar(df['timestamp'], df['volume'], color='blue', alpha=0.6)
-    
+
     # Add additional details to the title
-    ax1.set_title(f'Candlestick Chart for {data["symbol"]} \nDate Range: {pd.to_datetime(range_from, unit="s").strftime("%Y-%m-%d")} to {pd.to_datetime(range_to, unit="s").strftime("%Y-%m-%d")}')
+    ax1.set_title(f'Candlestick Chart for {data["symbol"]}')
     ax1.set_ylabel('Price')
     ax2.set_ylabel('Volume')
     ax2.set_xlabel('Date')
-    
+
     ax1.grid(True)
     ax2.grid(True)
-    
+
+    # Tilt the x-axis date labels
+    plt.xticks(rotation=45)
+
     plt.show()
 else:
     print("Failed to fetch data:", response)
