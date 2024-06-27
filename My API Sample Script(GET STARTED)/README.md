@@ -1,6 +1,6 @@
 To understand the difference between a **limit order** and a **stop order**, especially in the context of prioritizing price over the speed of execution, let's delve into their definitions and functionalities:
 
-![candles](https://github.com/imvickykumar999/fyers-api-sample-code/assets/50515418/cde18935-665e-4f4f-90c3-78bfda9482e7)
+![image](https://github.com/imvickykumar999/fyers-api-sample-code/assets/50515418/945d58aa-9e45-4f66-97e1-73bd6eeb68fb)
 
 ### Limit Order
 
